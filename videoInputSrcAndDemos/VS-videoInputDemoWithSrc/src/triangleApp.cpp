@@ -51,7 +51,7 @@ void triangleApp::init(){
 	//if those sizes are not possible VI will look for the next nearest matching size
 	//VI.setRequestedMediaSubType((int)MEDIASUBTYPE_MJPG);
 	VI.setupDevice(dev,   1920, 1080, VI_COMPOSITE); 
-	VI.setupDevice(dev+1, 1920, 1080, VI_COMPOSITE);	
+	//VI.setupDevice(dev+1, 1920, 1080, VI_COMPOSITE);	
 	
 	//once the device is setup you can try and
 	//set the format - this is useful if your device
@@ -61,7 +61,7 @@ void triangleApp::init(){
 	//we allocate our buffer based on the number
 	//of pixels in each frame - this will be width * height * 3
 	frame = new unsigned char[VI.getSize(dev)];
-	frame2 = new unsigned char[VI.getSize(dev+1)];
+	//frame2 = new unsigned char[VI.getSize(dev+1)];
  
 }
 
@@ -78,12 +78,12 @@ void triangleApp::idle(){
 	}
 	
 	//check to see if we have got a new frame
-	if( VI.isFrameNew(dev+1) )						
-	{	
-		//here we are directly return the pixels into our texture
-		//use VI.getWidth getHeight etc so that you don't get a crash
-   		IT2->loadImageData(VI.getPixels(dev+1, true), VI.getWidth(dev+1), 	VI.getHeight(dev+1), GL_RGB); 
-	}
+	//if( VI.isFrameNew(dev+1) )						
+	//{	
+	//	//here we are directly return the pixels into our texture
+	//	//use VI.getWidth getHeight etc so that you don't get a crash
+ //  		IT2->loadImageData(VI.getPixels(dev+1, true), VI.getWidth(dev+1), 	VI.getHeight(dev+1), GL_RGB); 
+	//}
 }
 
 
@@ -91,17 +91,17 @@ void triangleApp::draw(){
   
 	setupScreen();
 	IT->renderTexture(0, 0, VI.getWidth(dev), VI.getHeight(dev));
-	IT2->renderTexture(VI.getWidth(dev), 0, VI.getWidth(dev+1), VI.getHeight(dev+1));
+	//IT2->renderTexture(VI.getWidth(dev), 0, VI.getWidth(dev+1), VI.getHeight(dev+1));
 }
 
 void triangleApp::keyDown  (char c){
 
 	//some options hooked up to key commands
 	if(c=='S')VI.showSettingsWindow(dev);
-	if(c=='D')VI.showSettingsWindow(dev+1);
+	//if(c=='D')VI.showSettingsWindow(dev+1);
 
 	if(c=='R')VI.restartDevice(dev);
-	if(c=='T')VI.restartDevice(dev+1);
+	//if(c=='T')VI.restartDevice(dev+1);
 
 	if(c == '1')VI.setVideoSettingCameraPct(0, VI.propExposure, 0.1, 2);
 	if(c == '2')VI.setVideoSettingCameraPct(0, VI.propExposure, 0.9, 2);	
@@ -112,7 +112,7 @@ void triangleApp::keyDown  (char c){
 	if(c=='Q')
 	{
 		VI.stopDevice(dev);
-		VI.stopDevice(dev+1);
+		//VI.stopDevice(dev+1);
 	}
 }
 
