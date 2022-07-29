@@ -505,7 +505,8 @@ videoInput::videoInput(){
 	devicesFound 		= 0;
 	callbackSetCount 	= 0;
 	bCallback	 		= true;
-	requestedMediaSubType = MEDIASUBTYPE_RGB24;
+	//requestedMediaSubType = MEDIASUBTYPE_RGB24;
+	requestedMediaSubType = MEDIASUBTYPE_NV12;
 
     //setup a max no of device objects
     for(int i=0; i<VI_MAX_CAMERAS; i++)  VDList[i] = new videoDevice();
@@ -2065,7 +2066,8 @@ int videoInput::start(int deviceID, videoDevice *VD){
 	ZeroMemory(&mt,sizeof(AM_MEDIA_TYPE));
 
 	mt.majortype 	= MEDIATYPE_Video;
-	mt.subtype 		= MEDIASUBTYPE_RGB24;
+	//mt.subtype 		= MEDIASUBTYPE_RGB24;
+	mt.subtype = MEDIASUBTYPE_NV12;
 	mt.formattype 	= FORMAT_VideoInfo;
 
 	//VD->pAmMediaType->subtype = VD->videoType;
