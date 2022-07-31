@@ -54,7 +54,8 @@ Thanks to:
 	#   define _WIN32_WINNT 0x501
 #endif
 #include <windows.h>
-
+#include "tchar.h"
+#include "dshow.h"
 
 //Example Usage
 /*
@@ -409,6 +410,253 @@ class videoInput{
 
 		static std::vector<std::wstring> deviceUniqueNames;
 
+};
+
+//////////////////////////////////////   UTILS   /////////////////////////////////////
+
+class VIUtils {
+public:
+	static HRESULT EnumPins(IBaseFilter* pFilter) {
+		if (pFilter == NULL)
+		{
+			return E_POINTER;
+		}
+		HRESULT hr;
+		IEnumPins* pEnum = NULL;
+		hr = pFilter->EnumPins(&pEnum);
+		if (FAILED(hr)) {
+			return hr;
+		}
+		IPin* pPin = NULL;
+		while (pEnum->Next(1, &pPin, 0) == S_OK)
+		{
+			PIN_DIRECTION PinDir;
+			hr = pPin->QueryDirection(&PinDir);
+			if (FAILED(hr)) {
+				pPin->Release();
+				pEnum->Release();
+				return hr;
+			}
+			PIN_INFO pinInfo;
+			hr = pPin->QueryPinInfo(&pinInfo);
+			if (FAILED(hr)) {
+				pPin->Release();
+				pEnum->Release();
+				return hr;
+			}
+			_tprintf(TEXT("-->> PIN DIRECTION %s %s\n"), (PinDir == PINDIR_INPUT) ? TEXT("PINDIR_INPUT") : TEXT("PINDIR_OUTPUT"), pinInfo.achName);
+			IEnumMediaTypes* pMTEnum = NULL;
+			hr = pPin->EnumMediaTypes(&pMTEnum);
+			if (FAILED(hr)) {
+				pPin->Release();
+				pEnum->Release();
+				return hr;
+			}
+			AM_MEDIA_TYPE* mt = NULL;
+			while (pMTEnum->Next(1, &mt, 0) == S_OK) {
+				PrintAmMediaType(mt);
+			}
+		}
+	}
+
+	static HRESULT GetPin(IBaseFilter* pFilter, PIN_DIRECTION PinDir, IPin** ppPin)
+	{
+		IEnumPins* pEnum = NULL;
+		IPin* pPin = NULL;
+		HRESULT    hr;
+
+		if (ppPin == NULL)
+		{
+			return E_POINTER;
+		}
+
+		hr = pFilter->EnumPins(&pEnum);
+		if (FAILED(hr))
+		{
+			return hr;
+		}
+		while (pEnum->Next(1, &pPin, 0) == S_OK)
+		{
+			PIN_DIRECTION PinDirThis;
+			hr = pPin->QueryDirection(&PinDirThis);
+			if (FAILED(hr))
+			{
+				pPin->Release();
+				pEnum->Release();
+				return hr;
+			}
+			if (PinDir == PinDirThis)
+			{
+				// Found a match. Return the IPin pointer to the caller.
+				*ppPin = pPin;
+				pEnum->Release();
+				return S_OK;
+			}
+			// Release the pin for the next time through the loop.
+			pPin->Release();
+		}
+		// No more pins. We did not find a match.
+		pEnum->Release();
+		return E_FAIL;
+	}
+
+	static void PrintAmMediaType(AM_MEDIA_TYPE* type) {
+		TCHAR formattype[256];
+		int cFormatType = StringFromGUID2(type->formattype, formattype, _countof(formattype));
+		TCHAR majortype[256];
+		int cMajorType = StringFromGUID2(type->majortype, majortype, _countof(majortype));
+		TCHAR subtype[256];
+		int cSubType = StringFromGUID2(type->subtype, subtype, _countof(subtype));
+
+		_tprintf(TEXT("-->> AM_MEDIA_TYPE \n" \
+			"     formattype % s % s\n" \
+			"     majortype %s %s\n" \
+			"     subtype %s %s\n" \
+			"     bFixedSizeSamples %d\n"\
+			"     lSampleSize %d\n"\
+			"     cbFormat %d\n"),
+			formattype, media_type_guid_to_string(type->formattype),
+			majortype, media_type_guid_to_string(type->majortype),
+			subtype, media_type_guid_to_string(type->subtype),
+			type->bFixedSizeSamples,
+			type->lSampleSize,
+			type->cbFormat);
+		if (type->cbFormat > 0 && type->formattype == FORMAT_VideoInfo) {
+			VIDEOINFOHEADER* pInfo = reinterpret_cast<VIDEOINFOHEADER*>(type->pbFormat);
+			_tprintf(TEXT("     bitrate %d\n"), pInfo->dwBitRate);
+			_tprintf(TEXT("     biWidth %d\n"\
+				"     biHeight %d\n"\
+				"     biPlanes %d\n"\
+				"     biSize %d\n"\
+				"     biBitCount %d\n"\
+				"     biSizeImage %d\n"),
+				HEADER(pInfo)->biWidth,
+				HEADER(pInfo)->biHeight,
+				HEADER(pInfo)->biPlanes,
+				HEADER(pInfo)->biSize,
+				HEADER(pInfo)->biBitCount,
+				HEADER(pInfo)->biSizeImage);
+		}
+	}
+
+	static LPTSTR media_type_guid_to_string(GUID mediatype) {
+		if (mediatype == MEDIATYPE_Video) {
+			return TEXT("MEDIATYPE_Video");
+		}
+		else if (mediatype == MEDIATYPE_Audio) {
+			return TEXT("MEDIATYPE_Audio");
+		}
+		else if (mediatype == FORMAT_VideoInfo) {
+			return TEXT("FORMAT_VideoInfo");
+		}
+		else if (mediatype == MEDIASUBTYPE_NV12) {
+			return TEXT("MEDIASUBTYPE_NV12");
+		}
+		else if (mediatype == MEDIASUBTYPE_YUY2) {
+			return TEXT("MEDIASUBTYPE_YUY2");
+		}
+		else {
+			return TEXT("OTHERS");
+		}
+	}
+
+	static LPCTSTR MediaSubtypeToString(GUID subtype) {
+		if (subtype == MEDIASUBTYPE_RGB24) {
+			return TEXT("RGB24");
+		}
+		else if (subtype == MEDIASUBTYPE_RGB32) {
+			return TEXT("RGB32");
+		}
+		else if (subtype == MEDIASUBTYPE_RGB555) {
+			return TEXT("RGB555");
+		}
+		else if (subtype == MEDIASUBTYPE_RGB565) {
+			return TEXT("RGB565");
+		}
+		else if (subtype == MEDIASUBTYPE_YUY2) {
+			return TEXT("YUY2");
+		}
+		else if (subtype == MEDIASUBTYPE_YVYU) {
+			return TEXT("YVYU");
+		}
+		else if (subtype == MEDIASUBTYPE_YUYV) {
+			return TEXT("YUYV");
+		}
+		else if (subtype == MEDIASUBTYPE_IYUV) {
+			return TEXT("IYUV");
+		}
+		else if (subtype == MEDIASUBTYPE_UYVY) {
+			return TEXT("UYVY");
+		}
+		else if (subtype == MEDIASUBTYPE_YV12) {
+			return TEXT("YV12");
+		}
+		else if (subtype == MEDIASUBTYPE_YVU9) {
+			return TEXT("YVU9");
+		}
+		else if (subtype == MEDIASUBTYPE_Y411) {
+			return TEXT("Y411");
+		}
+		else if (subtype == MEDIASUBTYPE_Y41P) {
+			return TEXT("Y41P");
+		}
+		else if (subtype == MEDIASUBTYPE_Y211) {
+			return TEXT("Y211");
+		}
+		else if (subtype == MEDIASUBTYPE_AYUV) {
+			return TEXT("AYUV");
+		}
+		//else if (type == MEDIASUBTYPE_Y800) TEXT("Y800");
+		//else if (type == MEDIASUBTYPE_Y8) TEXT("Y8");
+		//else if (type == MEDIASUBTYPE_GREY) TEXT("GREY");
+		else if (subtype == MEDIASUBTYPE_NV12) {
+			return TEXT("NV12");
+		}
+		else {
+			return TEXT("OTHER");
+		}
+	}
+};
+
+class FrameSaver {
+public:
+	
+	static HRESULT Save(UCHAR* frame, ULONG cbSize) {
+		LPCTSTR yuvPath = TEXT("D:\\Projects\\3.yuv");
+		if (frameCount == 0) {
+			if (f) {
+				fflush(f);
+				fclose(f);
+				f = NULL;
+			}
+			f = _tfopen(yuvPath, TEXT("w"));
+			_tprintf(TEXT("Frame %d: Create yuv file %s\n"), frameCount, yuvPath);
+		}
+
+		if (frameCount == 55 || frameCount == 25) {
+			if (f) {
+				fwrite(frame, sizeof(unsigned char), cbSize, f);
+				fflush(f);
+				_tprintf(TEXT("Frame %d: Saved size %d\n"), frameCount, cbSize);
+			}
+		}
+		else if (frameCount == 61) {
+			if (f) {
+				fflush(f);
+				fclose(f);
+				_tprintf(TEXT("Frame %d: Close file\n"), frameCount);
+				f = NULL;
+			}
+		}
+		else {
+
+		}
+		frameCount++;
+		return S_OK;
+	}
+private:
+	static ULONG frameCount;
+	static FILE* f;
 };
 
  #endif

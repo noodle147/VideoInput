@@ -37,7 +37,7 @@ void triangleApp::init(){
 	//arrives if you are only ocassionally grabbing frames
 	//you might want to set this to false as the callback caches the last
 	//frame for performance reasons. 
-	VI.setUseCallback(true);
+	VI.setUseCallback(false);
 
 	//try and setup device with id 0 and id 1
 	//if only one device is found the second 

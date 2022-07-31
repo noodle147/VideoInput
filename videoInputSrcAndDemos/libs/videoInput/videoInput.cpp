@@ -89,6 +89,9 @@ static bool VI_COM_MULTI_THREADED = false;
 //don't touch
 static int comInitCount = 0;
 
+ULONG FrameSaver::frameCount = 0;
+FILE* FrameSaver::f = NULL;
+
 ///////////////////////////  HANDY FUNCTIONS  /////////////////////////////
 
 void MyFreeMediaType(AM_MEDIA_TYPE& mt){
@@ -124,13 +127,15 @@ public:
 	//------------------------------------------------
 	SampleGrabberCallback(){
 		InitializeCriticalSection(&critSection);
+		InitializeCriticalSection(&yuvSaveCS);
 		freezeCheck = 0;
 
 
 		bufferSetup 		= false;
 		newFrame			= false;
 		latestBufferLength 	= 0;
-
+		frameCount = 0;
+		f = NULL;
 		hEvent = CreateEvent(NULL, true, false, NULL);
 	}
 
@@ -139,6 +144,7 @@ public:
 	~SampleGrabberCallback(){
 		ptrBuffer = NULL;
 		DeleteCriticalSection(&critSection);
+		DeleteCriticalSection(&yuvSaveCS);
 		CloseHandle(hEvent);
 		if(bufferSetup){
 			delete [] pixels;
@@ -176,23 +182,67 @@ public:
     //This method is meant to have less overhead
 	//------------------------------------------------
     STDMETHODIMP SampleCB(double /*Time*/, IMediaSample *pSample){
-    	if(WaitForSingleObject(hEvent, 0) == WAIT_OBJECT_0) return S_OK;
+    	//if(WaitForSingleObject(hEvent, 0) == WAIT_OBJECT_0) return S_OK;
+		AM_MEDIA_TYPE* mt;
+		HRESULT hr = pSample->GetMediaType(&mt);
+		if (hr == S_OK) {
+			VIUtils::PrintAmMediaType(mt);
+		}
+		else if(hr == S_FALSE) {
+			_tprintf(TEXT("MediaType not changed\n"));
+		}
 
-    	HRESULT hr = pSample->GetPointer(&ptrBuffer);
+			EnterCriticalSection(&yuvSaveCS);
+			{
+				hr = pSample->GetPointer(&ptrBuffer);
+				if (hr == S_OK) {
+					latestBufferLength = pSample->GetActualDataLength();
 
-    	if(hr == S_OK){
-	    	latestBufferLength = pSample->GetActualDataLength();
-	      	if(latestBufferLength == numBytes){
+					LPCTSTR yuvPath = TEXT("D:\\Projects\\3.yuv");
+					if (frameCount == 0) {
+						if (f) {
+							fflush(f);
+							fclose(f);
+							f = NULL;
+						}
+						f = _tfopen(yuvPath, TEXT("w"));
+						_tprintf(TEXT("Frame %d: Create yuv file %s\n"), frameCount, yuvPath);
+					}
+
+					if (frameCount == 10) {
+						if (f) {
+							memcpy(pixels, ptrBuffer, latestBufferLength);
+							fwrite(pixels, sizeof(unsigned char), latestBufferLength, f);
+							fflush(f);
+							_tprintf(TEXT("Frame %d: Saved size %d\n"), frameCount, latestBufferLength);
+						}
+					}
+					else if (frameCount == 61) {
+						if (f) {
+							fflush(f);
+							fclose(f);
+							_tprintf(TEXT("Frame %d: Close file\n"), frameCount);
+							f = NULL;
+						}
+					}
+					else {
+
+					}
+					frameCount++;
+				}
+			}
+			LeaveCriticalSection(&yuvSaveCS);
+	      	/*if(latestBufferLength == numBytes){
 				EnterCriticalSection(&critSection);
+					
 	      			memcpy(pixels, ptrBuffer, latestBufferLength);
 					newFrame	= true;
 					freezeCheck = 1;
 				LeaveCriticalSection(&critSection);
 				SetEvent(hEvent);
 			}else{
-				printf("ERROR: SampleCB() - buffer sizes do not match\n");
-			}
-		}
+				printf("ERROR: %d: SampleCB() - buffer sizes do not match\n", frameCount);
+			}*/
 
 		return S_OK;
     }
@@ -212,7 +262,10 @@ public:
 	unsigned char * pixels;
 	unsigned char * ptrBuffer;
 	CRITICAL_SECTION critSection;
+	CRITICAL_SECTION yuvSaveCS;
 	HANDLE hEvent;
+	ULONG frameCount;
+	FILE* f;
 };
 
 
@@ -1053,7 +1106,8 @@ bool videoInput::getPixels(int id, unsigned char * dstBuffer, bool flipRedAndBlu
 					processPixels(src, dst, width, height, flipRedAndBlue, flipImage);
 					success = true;
 				}else{
-					if(verbose)printf("ERROR: GetPixels() - bufferSizes do not match!\n");
+					//if(verbose)printf("ERROR: GetPixels() - bufferSizes do not match! %d\n", bufferSize);
+					FrameSaver::Save((unsigned char*)VDList[id]->pBuffer, VDList[id]->width * VDList[id]->height * 3 / 2);
 				}
 			}else{
 				if(verbose)printf("ERROR: GetPixels() - Unable to grab frame for device %i\n", id);
