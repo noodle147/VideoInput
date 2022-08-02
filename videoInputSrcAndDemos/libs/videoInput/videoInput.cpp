@@ -1100,22 +1100,17 @@ bool videoInput::getPixels(int id, unsigned char * dstBuffer, bool flipRedAndBlu
 				int numBytes = VDList[id]->videoSize;
 				if (numBytes == bufferSize){
 
-					unsigned char * src = (unsigned char * )VDList[id]->pBuffer;
+					unsigned char * src = (unsigned char *)VDList[id]->pBuffer;
 					unsigned char * dst = dstBuffer;
 					int width 			= VDList[id]->width;
 					int height 			= VDList[id]->height;
 
-					//VIUtils::TestSetYuv(src, width, height);
-					// NV12 to RGB24
-					UCHAR* rgb24 = VIUtils::NV12ToRGB24(src, width, height);
-					//FrameSaver::Save(rgb24, width * height * 3);
+					VIUtils::NV12ToRGB24(dstBuffer, width * height * 3, src, width * height * 3 / 2, width, height, true);
 					//processPixels(rgb24, dst, width, height, flipRedAndBlue, flipImage);
-					processPixels(rgb24, dst, width, height, true, true);
-					delete[] rgb24;
+					//processPixels(rgb24, dst, width, height, true, true);
 					success = true;
 				}else{
 					if(verbose)printf("ERROR: GetPixels() - bufferSizes do not match! actual %d expected %d\n", bufferSize, numBytes);
-					FrameSaver::Save((unsigned char*)VDList[id]->pBuffer, VDList[id]->width * VDList[id]->height * 3 / 2);
 				}
 			}else{
 				if(verbose)printf("ERROR: GetPixels() - Unable to grab frame for device %i\n", id);

@@ -650,24 +650,24 @@ public:
 		Clamp(V, 0, 255);
 	}
 
-	static inline void RGBfromYUV(double& R, double& G, double& B, double Y, double U, double V)
+	static void RGBfromYUV(double& R, double& G, double& B, double Y, double U, double V)
 	{
 		Check(Y, 0, 255);
 		Check(U, 0, 255);
 		Check(V, 0, 255);
 		Y -= 16;
-		double Cr = U - 128;
-		double Cb = V - 128;
-		R = 1.164 * Y + 1.596 * Cb;
-		G = 1.164 * Y - 0.183 * Cb - 0.392 * Cr;
-		B = 1.164 * Y + 2.017 * Cr;
+		double Cb = U - 128;
+		double Cr = V - 128;
+		R = 1.164 * Y + 1.596 * Cr;
+		G = 1.164 * Y - 0.183 * Cr - 0.392 * Cb;
+		B = 1.164 * Y + 2.017 * Cb;
 
 		R = Clamp(R, 0, 255);
 		G = Clamp(G, 0, 255);
 		B = Clamp(B, 0, 255);
 	}
 
-	static HRESULT NV12ToRGB24(UCHAR* rgb24, ULONG rgb24Size, UCHAR* nv12, ULONG nv12Size, int width, int height) {
+	static HRESULT NV12ToRGB24(UCHAR* rgb24, ULONG rgb24Size, UCHAR* nv12, ULONG nv12Size, int width, int height, bool verticalFlip = false) {
 		if (width <= 0 || height <= 0 || rgb24 == NULL || nv12 == NULL || width % 2 != 0 || height % 2 != 0) {
 			return E_FAIL;
 		}
@@ -688,6 +688,9 @@ public:
 						DOUBLE Y = nv12[yPos];
 						DOUBLE R, G, B;
 						RGBfromYUV(R, G, B, Y, U, V);
+						if (verticalFlip) {
+							yPos = (height - 1 - 2 * j - l) * width + 2 * i + k;
+						}
 						rgb24[yPos * 3] = (UCHAR)R;
 						rgb24[yPos * 3 + 1] = (UCHAR)G;
 						rgb24[yPos * 3 + 2] = (UCHAR)B;

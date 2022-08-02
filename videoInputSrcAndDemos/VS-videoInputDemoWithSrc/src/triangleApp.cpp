@@ -74,7 +74,7 @@ void triangleApp::idle(){
 		VI.getPixels(dev,frame, true);
 
 		//we then load them into our texture
-		IT->loadImageData(frame, VI.getWidth(dev), VI.getHeight(dev),GL_BGR_EXT);
+		IT->loadImageData(frame, VI.getWidth(dev), VI.getHeight(dev),GL_RGB);
 	}
 	
 	//check to see if we have got a new frame
