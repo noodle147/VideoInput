@@ -29,7 +29,7 @@ void triangleApp::init(){
 
 	//we allocate our openGL texture objects
 	//we give them a ma size of 1024 by 1024 pixels
-	IT  = new imageTexture(2048,2048, GL_RGB);    	
+	IT  = new imageTexture(1920,1080, GL_RGB);    	
 	IT2 = new imageTexture(2048,2048, GL_RGB);  
 
 	//by default we use a callback method
@@ -60,7 +60,7 @@ void triangleApp::init(){
 
 	//we allocate our buffer based on the number
 	//of pixels in each frame - this will be width * height * 3
-	frame = new unsigned char[VI.getSize(dev)];
+	frame = new unsigned char[VI.getWidth(dev) * VI.getHeight(dev) * 3];
 	//frame2 = new unsigned char[VI.getSize(dev+1)];
  
 }
@@ -71,10 +71,10 @@ void triangleApp::idle(){
 	if( VI.isFrameNew(dev) )	
 	{
 		//we get the pixels by passing in out buffer which gets filled
-		VI.getPixels(dev,frame, true);			
+		VI.getPixels(dev,frame, true);
 
 		//we then load them into our texture
-		IT->loadImageData(frame, VI.getWidth(dev), VI.getHeight(dev),GL_RGB);
+		IT->loadImageData(frame, VI.getWidth(dev), VI.getHeight(dev),GL_BGR_EXT);
 	}
 	
 	//check to see if we have got a new frame

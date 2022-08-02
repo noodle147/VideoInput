@@ -51,7 +51,7 @@ Thanks to:
 
 //this is for TryEnterCriticalSection
 #ifndef _WIN32_WINNT
-	#   define _WIN32_WINNT 0x501
+#   define _WIN32_WINNT 0x501
 #endif
 #include <windows.h>
 #include "tchar.h"
@@ -191,59 +191,59 @@ typedef _AMMediaType AM_MEDIA_TYPE;
 
 ////////////////////////////////////////   VIDEO DEVICE   ///////////////////////////////////
 
-class videoDevice{
+class videoDevice {
 
 
-	public:
+public:
 
-		videoDevice();
-		void setSize(int w, int h);
-		void NukeDownstream(IBaseFilter *pBF);
-		void destroyGraph();
-		~videoDevice();
+	videoDevice();
+	void setSize(int w, int h);
+	void NukeDownstream(IBaseFilter* pBF);
+	void destroyGraph();
+	~videoDevice();
 
-		int videoSize;
-		int width;
-		int height;
-		int tryWidth;
-		int tryHeight;
+	int videoSize;
+	int width;
+	int height;
+	int tryWidth;
+	int tryHeight;
 
-		ICaptureGraphBuilder2 *pCaptureGraph;	// Capture graph builder object
-		IGraphBuilder *pGraph;					// Graph builder object
-	    IMediaControl *pControl;				// Media control object
-		IBaseFilter *pVideoInputFilter;  		// Video Capture filter
-		IBaseFilter *pGrabberF;
-		IBaseFilter * pDestFilter;
-		IAMStreamConfig *streamConf;
-		ISampleGrabber * pGrabber;    			// Grabs frame
-		AM_MEDIA_TYPE * pAmMediaType;
+	ICaptureGraphBuilder2* pCaptureGraph;	// Capture graph builder object
+	IGraphBuilder* pGraph;					// Graph builder object
+	IMediaControl* pControl;				// Media control object
+	IBaseFilter* pVideoInputFilter;  		// Video Capture filter
+	IBaseFilter* pGrabberF;
+	IBaseFilter* pDestFilter;
+	IAMStreamConfig* streamConf;
+	ISampleGrabber* pGrabber;    			// Grabs frame
+	AM_MEDIA_TYPE* pAmMediaType;
 
-		IMediaEventEx * pMediaEvent;
+	IMediaEventEx* pMediaEvent;
 
-		GUID videoType;
-		long formatType;
+	GUID videoType;
+	long formatType;
 
-		SampleGrabberCallback * sgCallback;
+	SampleGrabberCallback* sgCallback;
 
-		bool tryDiffSize;
-		bool useCrossbar;
-		bool readyToCapture;
-		bool sizeSet;
-		bool setupStarted;
-		bool specificFormat;
-		bool autoReconnect;
-		int  nFramesForReconnect;
-		unsigned long nFramesRunning;
-		int  connection;
-		int	 storeConn;
-		int  myID;
-		long requestedFrameTime; //ie fps
+	bool tryDiffSize;
+	bool useCrossbar;
+	bool readyToCapture;
+	bool sizeSet;
+	bool setupStarted;
+	bool specificFormat;
+	bool autoReconnect;
+	int  nFramesForReconnect;
+	unsigned long nFramesRunning;
+	int  connection;
+	int	 storeConn;
+	int  myID;
+	long requestedFrameTime; //ie fps
 
-		char 	nDeviceName[255];
-		WCHAR 	wDeviceName[255];
+	char 	nDeviceName[255];
+	WCHAR 	wDeviceName[255];
 
-		unsigned char * pixels;
-		char * pBuffer;
+	unsigned char* pixels;
+	char* pBuffer;
 
 };
 
@@ -254,165 +254,170 @@ class videoDevice{
 
 
 
-class videoInput{
+class videoInput {
 
-	public:
-		videoInput();
-		~videoInput();
+public:
+	videoInput();
+	~videoInput();
 
-		//turns off console messages - default is to print messages
-		static void setVerbose(bool _verbose);
+	//turns off console messages - default is to print messages
+	static void setVerbose(bool _verbose);
 
-		//this allows for multithreaded use of VI ( default is single threaded ).
-		//call this before any videoInput calls. 
-		//note if your app has other COM calls then you should set VIs COM usage to match the other COM mode 
-		static void setComMultiThreaded(bool bMulti);
+	//this allows for multithreaded use of VI ( default is single threaded ).
+	//call this before any videoInput calls. 
+	//note if your app has other COM calls then you should set VIs COM usage to match the other COM mode 
+	static void setComMultiThreaded(bool bMulti);
 
-		//Functions in rough order they should be used.
-		static int listDevices(bool silent = false);
-		static std::vector <std::string> getDeviceList(); 
+	//Functions in rough order they should be used.
+	static int listDevices(bool silent = false);
+	static std::vector <std::string> getDeviceList();
 
-		//needs to be called after listDevices - otherwise returns NULL
-		static const char * getDeviceName(int deviceID);
-		static int getDeviceIDFromName(const char * name);
+	//needs to be called after listDevices - otherwise returns NULL
+	static const char* getDeviceName(int deviceID);
+	static int getDeviceIDFromName(const char* name);
 
-		//needs to be called after listDevices - otherwise returns empty string
-		static const std::wstring& getUniqueDeviceName(int deviceID);
-		static int getDeviceIDFromUniqueName(const std::wstring& uniqueName);
+	//needs to be called after listDevices - otherwise returns empty string
+	static const std::wstring& getUniqueDeviceName(int deviceID);
+	static int getDeviceIDFromUniqueName(const std::wstring& uniqueName);
 
-		//choose to use callback based capture - or single threaded
-		void setUseCallback(bool useCallback);
+	//choose to use callback based capture - or single threaded
+	void setUseCallback(bool useCallback);
 
-		//call before setupDevice
-		//directshow will try and get the closest possible framerate to what is requested
-		void setIdealFramerate(int deviceID, int idealFramerate);
+	//call before setupDevice
+	//directshow will try and get the closest possible framerate to what is requested
+	void setIdealFramerate(int deviceID, int idealFramerate);
 
-		//some devices will stop delivering frames after a while - this method gives you the option to try and reconnect
-		//to a device if videoInput detects that a device has stopped delivering frames.
-		//you MUST CALL isFrameNew every app loop for this to have any effect
-		void setAutoReconnectOnFreeze(int deviceNumber, bool doReconnect, int numMissedFramesBeforeReconnect);
+	//some devices will stop delivering frames after a while - this method gives you the option to try and reconnect
+	//to a device if videoInput detects that a device has stopped delivering frames.
+	//you MUST CALL isFrameNew every app loop for this to have any effect
+	void setAutoReconnectOnFreeze(int deviceNumber, bool doReconnect, int numMissedFramesBeforeReconnect);
 
-		//Choose one of these four to setup your device
-		bool setupDevice(int deviceID);
-		bool setupDevice(int deviceID, int w, int h);
+	//Choose one of these four to setup your device
+	bool setupDevice(int deviceID);
+	bool setupDevice(int deviceID, int w, int h);
 
-		//These two are only for capture cards
-		//USB and Firewire cameras souldn't specify connection
-		bool setupDevice(int deviceID, int connection);
-		bool setupDevice(int deviceID, int w, int h, int connection);
+	//These two are only for capture cards
+	//USB and Firewire cameras souldn't specify connection
+	bool setupDevice(int deviceID, int connection);
+	bool setupDevice(int deviceID, int w, int h, int connection);
 
-		//If you need to you can set your NTSC/PAL/SECAM
-		//preference here. if it is available it will be used.
-		//see #defines above for available formats - eg VI_NTSC_M or VI_PAL_B
-		//should be called after setupDevice
-		//can be called multiple times
-		bool setFormat(int deviceNumber, int format);
-		void setRequestedMediaSubType(int mediatype); // added by gameover
+	//If you need to you can set your NTSC/PAL/SECAM
+	//preference here. if it is available it will be used.
+	//see #defines above for available formats - eg VI_NTSC_M or VI_PAL_B
+	//should be called after setupDevice
+	//can be called multiple times
+	bool setFormat(int deviceNumber, int format);
+	void setRequestedMediaSubType(int mediatype); // added by gameover
 
-		//Tells you when a new frame has arrived - you should call this if you have specified setAutoReconnectOnFreeze to true
-		bool isFrameNew(int deviceID);
+	//Tells you when a new frame has arrived - you should call this if you have specified setAutoReconnectOnFreeze to true
+	bool isFrameNew(int deviceID);
 
-		bool isDeviceSetup(int deviceID);
+	bool isDeviceSetup(int deviceID);
 
-		//Returns the pixels - flipRedAndBlue toggles RGB/BGR flipping - and you can flip the image too
-		unsigned char * getPixels(int deviceID, bool flipRedAndBlue = true, bool flipImage = false);
+	//Returns the pixels - flipRedAndBlue toggles RGB/BGR flipping - and you can flip the image too
+	unsigned char* getPixels(int deviceID, bool flipRedAndBlue = true, bool flipImage = false);
 
-		//Or pass in a buffer for getPixels to fill returns true if successful.
-		bool getPixels(int id, unsigned char * pixels, bool flipRedAndBlue = true, bool flipImage = false);
+	//Or pass in a buffer for getPixels to fill returns true if successful.
+	bool getPixels(int id, unsigned char* pixels, bool flipRedAndBlue = true, bool flipImage = false);
 
-		//Launches a pop up settings window
-		//For some reason in GLUT you have to call it twice each time.
-		void showSettingsWindow(int deviceID);
+	//Launches a pop up settings window
+	//For some reason in GLUT you have to call it twice each time.
+	void showSettingsWindow(int deviceID);
 
-		//Manual control over settings thanks.....
-		//These are experimental for now.
-		bool setVideoSettingFilter(int deviceID, long Property, long lValue, long Flags = 0, bool useDefaultValue = false);
-		bool setVideoSettingFilterPct(int deviceID, long Property, float pctValue, long Flags = 0);
-		bool getVideoSettingFilter(int deviceID, long Property, long &min, long &max, long &SteppingDelta, long &currentValue, long &flags, long &defaultValue);
+	//Manual control over settings thanks.....
+	//These are experimental for now.
+	bool setVideoSettingFilter(int deviceID, long Property, long lValue, long Flags = 0, bool useDefaultValue = false);
+	bool setVideoSettingFilterPct(int deviceID, long Property, float pctValue, long Flags = 0);
+	bool getVideoSettingFilter(int deviceID, long Property, long& min, long& max, long& SteppingDelta, long& currentValue, long& flags, long& defaultValue);
 
-		bool setVideoSettingCamera(int deviceID, long Property, long lValue, long Flags = 0, bool useDefaultValue = false);
-		bool setVideoSettingCameraPct(int deviceID, long Property, float pctValue, long Flags = 0);
-		bool getVideoSettingCamera(int deviceID, long Property, long &min, long &max, long &SteppingDelta, long &currentValue, long &flags, long &defaultValue);
+	bool setVideoSettingCamera(int deviceID, long Property, long lValue, long Flags = 0, bool useDefaultValue = false);
+	bool setVideoSettingCameraPct(int deviceID, long Property, float pctValue, long Flags = 0);
+	bool getVideoSettingCamera(int deviceID, long Property, long& min, long& max, long& SteppingDelta, long& currentValue, long& flags, long& defaultValue);
 
-		//bool setVideoSettingCam(int deviceID, long Property, long lValue, long Flags = 0, bool useDefaultValue = false);
+	//bool setVideoSettingCam(int deviceID, long Property, long lValue, long Flags = 0, bool useDefaultValue = false);
 
-		//get width, height and number of pixels
-		int  getWidth(int deviceID);
-		int  getHeight(int deviceID);
-		int  getSize(int deviceID);
+	//get width, height and number of pixels
+	int  getWidth(int deviceID);
+	int  getHeight(int deviceID);
+	int  getSize(int deviceID);
 
-		//completely stops and frees a device
-		void stopDevice(int deviceID);
+	//completely stops and frees a device
+	void stopDevice(int deviceID);
 
-		//as above but then sets it up with same settings
-		bool restartDevice(int deviceID);
+	//as above but then sets it up with same settings
+	bool restartDevice(int deviceID);
 
-		//number of devices available
-		int  devicesFound;
+	//number of devices available
+	int  devicesFound;
 
-		long propBrightness;
-		long propContrast;
-		long propHue;
-		long propSaturation;
-		long propSharpness;
-		long propGamma;
-		long propColorEnable;
-		long propWhiteBalance;
-		long propBacklightCompensation;
-		long propGain;
+	long propBrightness;
+	long propContrast;
+	long propHue;
+	long propSaturation;
+	long propSharpness;
+	long propGamma;
+	long propColorEnable;
+	long propWhiteBalance;
+	long propBacklightCompensation;
+	long propGain;
 
-		long propPan;
-		long propTilt;
-		long propRoll;
-		long propZoom;
-		long propExposure;
-		long propIris;
-		long propFocus;
+	long propPan;
+	long propTilt;
+	long propRoll;
+	long propZoom;
+	long propExposure;
+	long propIris;
+	long propFocus;
 
-	private:
+private:
 
-		void setPhyCon(int deviceID, int conn);
-		void setAttemptCaptureSize(int deviceID, int w, int h);
-		bool setup(int deviceID);
-		void processPixels(unsigned char * src, unsigned char * dst, int width, int height, bool bRGB, bool bFlip);
-		int  start(int deviceID, videoDevice * VD);
-		int  getDeviceCount();
-		void getMediaSubtypeAsString(GUID type, char * typeAsString);
+	void setPhyCon(int deviceID, int conn);
+	void setAttemptCaptureSize(int deviceID, int w, int h);
+	bool setup(int deviceID);
+	void processPixels(unsigned char* src, unsigned char* dst, int width, int height, bool bRGB, bool bFlip);
+	int  start(int deviceID, videoDevice* VD);
+	int  getDeviceCount();
+	void getMediaSubtypeAsString(GUID type, char* typeAsString);
 
-		HRESULT getDevice(IBaseFilter **pSrcFilter, int deviceID, WCHAR * wDeviceName, char * nDeviceName);
-		static HRESULT ShowFilterPropertyPages(IBaseFilter *pFilter);
-		HRESULT SaveGraphFile(IGraphBuilder *pGraph, WCHAR *wszPath);
-		HRESULT routeCrossbar(ICaptureGraphBuilder2 **ppBuild, IBaseFilter **pVidInFilter, int conType, GUID captureMode);
+	HRESULT getDevice(IBaseFilter** pSrcFilter, int deviceID, WCHAR* wDeviceName, char* nDeviceName);
+	static HRESULT ShowFilterPropertyPages(IBaseFilter* pFilter);
+	HRESULT SaveGraphFile(IGraphBuilder* pGraph, WCHAR* wszPath);
+	HRESULT routeCrossbar(ICaptureGraphBuilder2** ppBuild, IBaseFilter** pVidInFilter, int conType, GUID captureMode);
 
-		//don't touch
-		static bool comInit();
-		static bool comUnInit();
+	//don't touch
+	static bool comInit();
+	static bool comUnInit();
 
-		int  connection;
-		int  callbackSetCount;
-		bool bCallback;
+	int  connection;
+	int  callbackSetCount;
+	bool bCallback;
 
-		GUID CAPTURE_MODE;
-		GUID requestedMediaSubType;
+	GUID CAPTURE_MODE;
+	GUID requestedMediaSubType;
 
-		//Extra video subtypes
-		GUID MEDIASUBTYPE_Y800;
-		GUID MEDIASUBTYPE_Y8;
-		GUID MEDIASUBTYPE_GREY;
+	//Extra video subtypes
+	GUID MEDIASUBTYPE_Y800;
+	GUID MEDIASUBTYPE_Y8;
+	GUID MEDIASUBTYPE_GREY;
 
-		videoDevice * VDList[VI_MAX_CAMERAS];
-		GUID mediaSubtypes[VI_NUM_TYPES];
-		long formatTypes[VI_NUM_FORMATS];
+	videoDevice* VDList[VI_MAX_CAMERAS];
+	GUID mediaSubtypes[VI_NUM_TYPES];
+	long formatTypes[VI_NUM_FORMATS];
 
-		static void __cdecl basicThread(void * objPtr);
+	static void __cdecl basicThread(void* objPtr);
 
-		static char deviceNames[VI_MAX_CAMERAS][255];
+	static char deviceNames[VI_MAX_CAMERAS][255];
 
-		static std::vector<std::wstring> deviceUniqueNames;
+	static std::vector<std::wstring> deviceUniqueNames;
 
 };
 
 //////////////////////////////////////   UTILS   /////////////////////////////////////
+
+const UCHAR WHITE[] = { UCHAR(235), UCHAR(128), UCHAR(128) };
+const UCHAR RED[] = { UCHAR(82), UCHAR(90), UCHAR(240) };
+const UCHAR GREEN[] = { UCHAR(145), UCHAR(54), UCHAR(34) };
+const UCHAR BLUE[] = { UCHAR(41), UCHAR(240), UCHAR(110) };
 
 class VIUtils {
 public:
@@ -616,31 +621,299 @@ public:
 			return TEXT("OTHER");
 		}
 	}
+
+	static inline HRESULT Check(double value, double min, double max) {
+		if (value >= min && value <= max) {
+			return S_OK;
+		}
+		_tprintf(TEXT("%f < %f or %f > %f"), value, min, value, max);
+		return E_FAIL;
+	}
+
+	static inline double Clamp(double value, double min, double max) {
+		if (value < min) {
+			return min;
+		}
+		if (value > max) {
+			return max;
+		}
+		return value;
+	}
+
+	static inline void YUVfromRGB(double& Y, double& U, double& V, const double R, const double G, const double B)
+	{
+		Y = 0.257 * R + 0.504 * G + 0.098 * B + 16;
+		U = -0.148 * R - 0.291 * G + 0.439 * B + 128;
+		V = 0.439 * R - 0.368 * G - 0.071 * B + 128;
+		Clamp(Y, 0, 255);
+		Clamp(U, 0, 255);
+		Clamp(V, 0, 255);
+	}
+
+	static inline void RGBfromYUV(double& R, double& G, double& B, double Y, double U, double V)
+	{
+		Check(Y, 0, 255);
+		Check(U, 0, 255);
+		Check(V, 0, 255);
+		Y -= 16;
+		double Cr = U - 128;
+		double Cb = V - 128;
+		R = 1.164 * Y + 1.596 * Cb;
+		G = 1.164 * Y - 0.183 * Cb - 0.392 * Cr;
+		B = 1.164 * Y + 2.017 * Cr;
+
+		R = Clamp(R, 0, 255);
+		G = Clamp(G, 0, 255);
+		B = Clamp(B, 0, 255);
+	}
+
+	static HRESULT NV12ToRGB24(UCHAR* rgb24, ULONG rgb24Size, UCHAR* nv12, ULONG nv12Size, int width, int height) {
+		if (width <= 0 || height <= 0 || rgb24 == NULL || nv12 == NULL || width % 2 != 0 || height % 2 != 0) {
+			return E_FAIL;
+		}
+		if (rgb24Size != width * height * 3) {
+			return E_FAIL;
+		}
+		if (nv12Size != width * height * 3 / 2) {
+			return E_FAIL;
+		}
+
+		for (int j = 0; j < height / 2; j++) { // Row
+			for (int i = 0; i < width / 2; i++) { // Column
+				DOUBLE U = nv12[width * height + j * width + i * 2];
+				DOUBLE V = nv12[width * height + j * width + i * 2 + 1];
+				for (int k = 0; k < 2; k++) {
+					for (int l = 0; l < 2; l++) {
+						int yPos = (2 * j + l) * width + 2 * i + k;
+						DOUBLE Y = nv12[yPos];
+						DOUBLE R, G, B;
+						RGBfromYUV(R, G, B, Y, U, V);
+						rgb24[yPos * 3] = (UCHAR)R;
+						rgb24[yPos * 3 + 1] = (UCHAR)G;
+						rgb24[yPos * 3 + 2] = (UCHAR)B;
+					}
+				}
+			}
+		}
+		return S_OK;
+	}
+
+	static UCHAR* NV12ToRGB24(UCHAR* data, int width, int height) {
+		int sizeRgb24 = width * height * 3;
+		int sizeNv12 = width * height * 3 / 2;
+		UCHAR* rgb24 = new UCHAR[sizeRgb24];
+		if (rgb24) {
+			VIUtils::NV12ToRGB24(rgb24, sizeRgb24, data, sizeNv12, width, height);
+		}
+		return rgb24;
+	}
+
+	static HRESULT SaveToFile(LPCTSTR fileName, UCHAR* data, size_t cbSize) {
+		if (!fileName || !data || cbSize == 0) {
+			return E_FAIL;
+		}
+		FILE* f = _tfopen(fileName, TEXT("wb"));
+		if (!f) {
+			return E_FAIL;
+		}
+		fwrite(data, sizeof(UCHAR), cbSize, f);
+		fflush(f);
+		fclose(f);
+		return S_OK;
+	}
+
+	static HRESULT SetYUV(UCHAR* data, int width, int height, UCHAR y, UCHAR u, UCHAR v) {
+		if (!data || width <= 0 || height <= 0 || width % 2 != 0 || height % 2 != 0) {
+			return E_FAIL;
+		}
+		memset(data, y, width * height);
+		for (int i = 0; i < width * height / 4; i++) {
+			data[width * height + 2 * i] = u;
+			data[width * height + 2 * i + 1] = v;
+		}
+		return S_OK;
+	}
+
+	static UCHAR* UVByY(int& width, int& height, UCHAR y) {
+		width = 512;
+		height = 512;
+		UCHAR* yuv = new UCHAR[width * height * 3 / 2];
+		memset(yuv, 0, width * height * 3 / 2);
+		memset(yuv, y, width * height);
+
+		int offset = width * height;
+		for (int j = 0; j < height / 2; j++) {
+			for (int i = 0; i < width / 2; i++) {
+
+				int uPos = j * width + i * 2;
+				int vPos = j * width + i * 2 + 1;
+
+				yuv[offset + uPos] = j;
+				yuv[offset + vPos] = i;
+			}
+		}
+
+		return yuv;
+	}
+
+	static UCHAR* TestCreateAllYuv(int& width, int& height) {
+		width = 4096;
+		height = 4096;
+		UCHAR* yuv = new UCHAR[width * height * 3 / 2];
+		for (int j = 0; j < height; j++) {
+			for (int i = 0; i < width; i++) {
+				yuv[j * width + i] = (UCHAR)(i % 16 + (j % 16) * 16);
+			}
+		}
+		for (int i = 0; i < width * height / 2; i++) {
+			yuv[width * height + i] = UCHAR(128);
+		}
+		return yuv;
+	}
+
+	static HRESULT TestSetYuv(UCHAR* data, int width, int height) {
+		if (!data || width <= 0 || height <= 0 || width % 2 != 0 || height % 2 != 0) {
+			return E_FAIL;
+		}
+		for (int j = 0; j < height; j++) {
+			for (int i = 0; i < width; i++) {
+				UCHAR Y;
+				if (i < width / 2 && j < height / 2) {
+					Y = WHITE[0];
+				}
+				else if (i < width / 2 && j >= height / 2) {
+					Y = RED[0];
+				}
+				else if (i >= width / 2 && j < height / 2) {
+					Y = GREEN[0];
+				}
+				else {
+					Y = BLUE[0];
+				}
+				data[j * width + i] = Y;
+			}
+		}
+
+		for (int j = 0; j < height / 2; j++) {
+			for (int i = 0; i < width / 2; i++) {
+				UCHAR U, V;
+				if (i < width / 4 && j < height / 4) {
+					U = WHITE[1];
+					V = WHITE[2];
+				}
+				else if (i < width / 4 && j >= height / 4) {
+					U = RED[1];
+					V = RED[2];
+				}
+				else if (i >= width / 4 && j < height / 4) {
+					U = GREEN[1];
+					V = GREEN[2];
+				}
+				else {
+					U = BLUE[1];
+					V = BLUE[2];
+				}
+				data[width * height + j * width + 2 * i] = U;
+				data[width * height + j * width + 2 * i + 1] = V;
+			}
+		}
+		return S_OK;
+	}
+
+	static inline HRESULT SetYUV(UCHAR* dst, int dstWidth, int dstHeight, UCHAR* src, int srcWidth, int srcHeight, int posX, int posY) {
+		if (!dst || dstWidth <= 0 || dstHeight <= 0) {
+			return E_FAIL;
+		}
+		if (!src || srcWidth <= 0 || srcHeight <= 0) {
+			return E_FAIL;
+		}
+		if (posX % 2 != 0 || posY % 2 != 0) {
+			return E_FAIL;
+		}
+		int dstOffset = dstWidth * dstHeight;
+		int srcOffset = srcWidth * srcHeight;
+		for (int srcJ = 0; srcJ < srcHeight; srcJ++) {
+			for (int srcI = 0; srcI < srcWidth; srcI++) {
+				int dstX = posX + srcI;
+				int dstY = posY + srcJ;
+				if (dstX >= dstWidth) {
+					continue;
+				}
+				if (dstY >= dstHeight) {
+					break;
+				}
+				dst[dstY * dstWidth + dstX] = src[srcJ * srcWidth + srcI];
+				if (srcI % 2 == 0 && srcJ % 2 == 0) {
+					dst[dstOffset + dstY / 2 * dstWidth + dstX / 2 * 2] = src[srcOffset + srcJ / 2 * srcWidth + srcI / 2 * 2];
+					dst[dstOffset + dstY / 2 * dstWidth + dstX / 2 * 2 + 1] = src[srcOffset + srcJ / 2 * srcWidth + srcI / 2 * 2 + 1];
+				}
+			}
+		}
+		return S_OK;
+	}
+
+	static inline void SetYUV(UCHAR* data, int width, int height, int offsetX, int offsetY, UCHAR Y, UCHAR U, UCHAR V) {
+		data[offsetY * width + offsetX] = Y;
+		data[width * height + offsetY * width / 2 + offsetX / 2 * 2] = U;
+		data[width * height + offsetY * width / 2 + offsetX / 2 * 2 + 1] = V;
+	}
+
+	static HRESULT FindYUVBound(UCHAR* data, int width, int height, int& yMin, int& yMax, int& uMin, int& uMax, int& vMin, int& vMax) {
+		if (!data || width <= 0 || height <= 0) {
+			return E_FAIL;
+		}
+		yMin = uMin = vMin = 256;
+		yMax = uMax = vMax = -1;
+		for (int i = 0; i < width * height; i++) {
+			if (data[i] < yMin) {
+				yMin = data[i];
+			}
+			if (data[i] > yMax) {
+				yMax = data[i];
+			}
+		}
+
+		return S_OK;
+	}
 };
 
 class FrameSaver {
 public:
-	
+
 	static HRESULT Save(UCHAR* frame, ULONG cbSize) {
 		LPCTSTR yuvPath = TEXT("D:\\Projects\\3.yuv");
+		LPCTSTR rgb24Path = TEXT("D:\\Projects\\3.rgb24");
 		if (frameCount == 0) {
 			if (f) {
 				fflush(f);
 				fclose(f);
 				f = NULL;
 			}
-			f = _tfopen(yuvPath, TEXT("w"));
+			f = _tfopen(yuvPath, TEXT("wb"));
 			_tprintf(TEXT("Frame %d: Create yuv file %s\n"), frameCount, yuvPath);
+			fRgb24 = _tfopen(rgb24Path, TEXT("wb"));
+			_tprintf(TEXT("Frame %d: Create rgb24 file %s\n"), frameCount, rgb24Path);
 		}
 
-		if (frameCount == 55 || frameCount == 25) {
+		if (frameCount < 30) {
 			if (f) {
-				fwrite(frame, sizeof(unsigned char), cbSize, f);
+				UCHAR* tmp = new UCHAR[cbSize];
+				memcpy(tmp, frame, cbSize);
+				fwrite(tmp, sizeof(unsigned char), cbSize, f);
 				fflush(f);
-				_tprintf(TEXT("Frame %d: Saved size %d\n"), frameCount, cbSize);
+				delete[] tmp;
+				tmp = NULL;
+				_tprintf(TEXT("Frame %d: actual is rgb24 Saved size %d\n"), frameCount, cbSize);
+
+				/*	ULONG sizeRgb24 = 1920 * 1080 * 3;
+					UCHAR* rgb24 = new UCHAR[sizeRgb24];
+					VIUtils::NV12ToRGB24(rgb24, sizeRgb24, frame, cbSize, 1920, 1080);
+					fwrite(rgb24, sizeof(UCHAR), sizeRgb24, fRgb24);
+					_tprintf(TEXT("Frame %d: Save frame to %s\n"), frameCount, rgb24Path);
+					delete[] rgb24;*/
 			}
 		}
-		else if (frameCount == 61) {
+		else if (frameCount == 30) {
 			if (f) {
 				fflush(f);
 				fclose(f);
@@ -657,6 +930,7 @@ public:
 private:
 	static ULONG frameCount;
 	static FILE* f;
+	static FILE* fRgb24;
 };
 
- #endif
+#endif

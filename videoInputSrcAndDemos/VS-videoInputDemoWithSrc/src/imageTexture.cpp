@@ -29,12 +29,7 @@ imageTexture::imageTexture(int w, int h, int internalGlDataType){
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	
 	glDisable(GL_TEXTURE_2D);
-	
-
 }
-
-
-
 
 void imageTexture::loadImageData(unsigned char * data, int w, int h, int glDataType){
 
@@ -42,7 +37,6 @@ void imageTexture::loadImageData(unsigned char * data, int w, int h, int glDataT
 		printf("image data too big - bailing \n");
 		return;
 	}
-	
 	
 	//compute new tex co-ords based on the ratio of data's w, h to texture w,h;
 	
@@ -74,10 +68,16 @@ void imageTexture::renderTexture(int x, int y, int w, int h){
 		float py1 = y+h;
 		
 		glBegin( GL_QUADS );
-			glTexCoord2f(0.0,0.0);					glVertex3f(px0, py0,0);
-			glTexCoord2f(tex_t,0.0);				glVertex3f(px1, py0,0);
-			glTexCoord2f(tex_t,tex_u);				glVertex3f(px1, py1,0);
-			glTexCoord2f(0.0,tex_u);				glVertex3f(px0, py1,0);
+			//glTexCoord2f(0.0,0.0);				glVertex3f(px0, py0,0);
+			//glTexCoord2f(tex_t,0.0);				glVertex3f(px1, py0,0);
+			//glTexCoord2f(tex_t,tex_u);			glVertex3f(px1, py1,0);
+			//glTexCoord2f(0.0,tex_u);				glVertex3f(px0, py1,0);
+
+			glTexCoord2f(0.0, 0.0);				glVertex3f(0, 0, 0);
+			glTexCoord2f(1.0, 0.0);				glVertex3f(960, 0, 0);
+			glTexCoord2f(1.0, 1.0);				glVertex3f(960, 540, 0);
+			glTexCoord2f(0.0, 1.0);				glVertex3f(0, 540, 0);
+
 		glEnd();
 		
 	glDisable(GL_TEXTURE_2D);

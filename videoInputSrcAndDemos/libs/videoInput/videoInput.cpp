@@ -91,6 +91,7 @@ static int comInitCount = 0;
 
 ULONG FrameSaver::frameCount = 0;
 FILE* FrameSaver::f = NULL;
+FILE* FrameSaver::fRgb24 = NULL;
 
 ///////////////////////////  HANDY FUNCTIONS  /////////////////////////////
 
@@ -181,8 +182,9 @@ public:
 
     //This method is meant to have less overhead
 	//------------------------------------------------
-    STDMETHODIMP SampleCB(double /*Time*/, IMediaSample *pSample){
+    STDMETHODIMP SampleCB(double time, IMediaSample *pSample){
     	//if(WaitForSingleObject(hEvent, 0) == WAIT_OBJECT_0) return S_OK;
+		_tprintf(TEXT("-->> SampleCB %f"), time);
 		AM_MEDIA_TYPE* mt;
 		HRESULT hr = pSample->GetMediaType(&mt);
 		if (hr == S_OK) {
@@ -205,7 +207,7 @@ public:
 							fclose(f);
 							f = NULL;
 						}
-						f = _tfopen(yuvPath, TEXT("w"));
+						f = _tfopen(yuvPath, TEXT("wb"));
 						_tprintf(TEXT("Frame %d: Create yuv file %s\n"), frameCount, yuvPath);
 					}
 
@@ -335,7 +337,7 @@ void videoDevice::setSize(int w, int h){
 	{
 		width 				= w;
 		height 				= h;
-		videoSize 			= w*h*3;
+		videoSize 			= w*h*3/2;
 		sizeSet 			= true;
 		pixels				= new unsigned char[videoSize];
 		pBuffer				= new char[videoSize];
@@ -1100,13 +1102,19 @@ bool videoInput::getPixels(int id, unsigned char * dstBuffer, bool flipRedAndBlu
 
 					unsigned char * src = (unsigned char * )VDList[id]->pBuffer;
 					unsigned char * dst = dstBuffer;
-					int height 			= VDList[id]->height;
 					int width 			= VDList[id]->width;
+					int height 			= VDList[id]->height;
 
-					processPixels(src, dst, width, height, flipRedAndBlue, flipImage);
+					//VIUtils::TestSetYuv(src, width, height);
+					// NV12 to RGB24
+					UCHAR* rgb24 = VIUtils::NV12ToRGB24(src, width, height);
+					//FrameSaver::Save(rgb24, width * height * 3);
+					//processPixels(rgb24, dst, width, height, flipRedAndBlue, flipImage);
+					processPixels(rgb24, dst, width, height, true, true);
+					delete[] rgb24;
 					success = true;
 				}else{
-					//if(verbose)printf("ERROR: GetPixels() - bufferSizes do not match! %d\n", bufferSize);
+					if(verbose)printf("ERROR: GetPixels() - bufferSizes do not match! actual %d expected %d\n", bufferSize, numBytes);
 					FrameSaver::Save((unsigned char*)VDList[id]->pBuffer, VDList[id]->width * VDList[id]->height * 3 / 2);
 				}
 			}else{

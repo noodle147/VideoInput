@@ -3,7 +3,6 @@
 
 #include "stdafx.h"
 triangleApp TAPP;
-	 
 
 void GLFWCALL keyfun( int key, int action )
 {
@@ -25,15 +24,69 @@ void GLFWCALL keyfun( int key, int action )
     fflush( stdout );
 }
 
+void Test() {
+    int width = 4096;
+    int height = 4096;
+    _tprintf(TEXT("-->> Create Start\n"));
+    UCHAR* nv12 = VIUtils::TestCreateAllYuv(width, height);
+    _tprintf(TEXT("-->> Create End (%d,%d)\n"), width, height);
+    ULONG sizeNv12 = width * height * 3 / 2;
+    //UCHAR* nv12 = new UCHAR[sizeNv12];
 
+    //VIUtils::SetYuv(nv12, width, height, RED[0], RED[1], RED[2]);
+    //VIUtils::SetYuv(nv12, width, height, GREEN[0], GREEN[1], GREEN[2]);
+    //VIUtils::SetYuv(nv12, width, height, BLUE[0], BLUE[1], BLUE[2]);
+    //VIUtils::TestSetYuv(nv12, width, height);
+    
+    VIUtils::SaveToFile(TEXT("D:\\Projects\\all.yuv"), nv12, sizeNv12);
 
+    UCHAR* rgb24 = VIUtils::NV12ToRGB24(nv12, width, height);
+    VIUtils::SaveToFile(TEXT("D:\\Projects\\all.rgb24"), rgb24, width * height * 3);
 
+    delete[] nv12;
+}
 
+void TestYUVPossible(UCHAR y) {
+    int width, height;
+    UCHAR* nv12 = VIUtils::UVByY(width, height, y);
+    for (int i = 0; i < 64; i++) {
+        _tprintf(TEXT("%x "), nv12[width * height + i]);
+    }
+    _tprintf(TEXT("\n"));
+    TCHAR name[64];
+    _stprintf(name, TEXT("D:\\Projects\\yuv_rgb\\Y_%d_NV12.nv12"), y);
+    VIUtils::SaveToFile(name, nv12, width * height * 3 / 2);
+    _tprintf(TEXT("Save to %s\n"), name);
 
+    _stprintf(name, TEXT("D:\\Projects\\yuv_rgb\\Y_%d_RGB24.rgb24"), y);
+    UCHAR* rgb24 = VIUtils::NV12ToRGB24(nv12, width, height);
+    VIUtils::SaveToFile(name, rgb24, width * height * 3);
+    delete[] nv12;
+    delete[] rgb24;
+}
+
+void TestSetYUVBlock() {
+    int dstW = 1024;
+    int dstH = 1024;
+    UCHAR* dst = new UCHAR[dstW * dstH * 3 / 2];
+    HRESULT hr = VIUtils::SetYUV(dst, dstW, dstH, BLUE[0], BLUE[1], BLUE[2]);
+    int srcW, srcH;
+    UCHAR* src = VIUtils::UVByY(srcW, srcH, 88);
+    hr = VIUtils::SetYUV(dst, dstW, dstH, src, srcW, srcH, 896, 256);
+    if (hr != S_OK) {
+        _tprintf(TEXT("SetYUV block failed\n"));
+    }
+    VIUtils::SaveToFile(TEXT("D:\\Projects\\TestSetYUVBlock_src.yuv"), src, srcW * srcH * 3 / 2);
+    VIUtils::SaveToFile(TEXT("D:\\Projects\\TestSetYUVBlock_dst.yuv"), dst, dstW * dstH * 3 / 2);
+    delete[] src;
+    delete[] dst;
+}
 
 int main( void )
 {
-
+    //Test();
+    //TestYUVPossible(16);
+    //TestSetYUVBlock();
 
     int     width, height, running, frames, x, y;
     double  t, t0, fps;
@@ -44,7 +97,7 @@ int main( void )
     glfwInit();
 
     // Open OpenGL window    
-    if (!glfwOpenWindow(1024,768,    // Open window
+    if (!glfwOpenWindow(960,540,    // Open window
     24, 24, 24,                                // Red, green, and blue bits for color buffer
     24,                                        // Bits for alpha buffer
     24,                                        // Bits for depth buffer (Z-buffer)
