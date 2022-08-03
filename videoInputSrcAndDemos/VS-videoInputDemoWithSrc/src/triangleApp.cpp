@@ -88,7 +88,6 @@ void triangleApp::idle(){
 
 
 void triangleApp::draw(){
-  
 	setupScreen();
 	IT->renderTexture(0, 0, VI.getWidth(dev), VI.getHeight(dev));
 	//IT2->renderTexture(VI.getWidth(dev), 0, VI.getWidth(dev+1), VI.getHeight(dev+1));

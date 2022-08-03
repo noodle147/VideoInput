@@ -10,6 +10,8 @@
 
 #include "videoInput.h"
 #include <tchar.h>
+#include <chrono>
+using namespace std::chrono;
 
 //Include Directshow stuff here so we don't worry about needing all the h files.
 #include <dshow.h>
@@ -183,68 +185,24 @@ public:
     //This method is meant to have less overhead
 	//------------------------------------------------
     STDMETHODIMP SampleCB(double time, IMediaSample *pSample){
-    	//if(WaitForSingleObject(hEvent, 0) == WAIT_OBJECT_0) return S_OK;
-		_tprintf(TEXT("-->> SampleCB %f"), time);
-		AM_MEDIA_TYPE* mt;
-		HRESULT hr = pSample->GetMediaType(&mt);
+		if (WaitForSingleObject(hEvent, 0) == WAIT_OBJECT_0) return S_OK;
+
+		HRESULT hr = pSample->GetPointer(&ptrBuffer);
+
 		if (hr == S_OK) {
-			VIUtils::PrintAmMediaType(mt);
-		}
-		else if(hr == S_FALSE) {
-			_tprintf(TEXT("MediaType not changed\n"));
-		}
-
-			EnterCriticalSection(&yuvSaveCS);
-			{
-				hr = pSample->GetPointer(&ptrBuffer);
-				if (hr == S_OK) {
-					latestBufferLength = pSample->GetActualDataLength();
-
-					LPCTSTR yuvPath = TEXT("D:\\Projects\\3.yuv");
-					if (frameCount == 0) {
-						if (f) {
-							fflush(f);
-							fclose(f);
-							f = NULL;
-						}
-						f = _tfopen(yuvPath, TEXT("wb"));
-						_tprintf(TEXT("Frame %d: Create yuv file %s\n"), frameCount, yuvPath);
-					}
-
-					if (frameCount == 10) {
-						if (f) {
-							memcpy(pixels, ptrBuffer, latestBufferLength);
-							fwrite(pixels, sizeof(unsigned char), latestBufferLength, f);
-							fflush(f);
-							_tprintf(TEXT("Frame %d: Saved size %d\n"), frameCount, latestBufferLength);
-						}
-					}
-					else if (frameCount == 61) {
-						if (f) {
-							fflush(f);
-							fclose(f);
-							_tprintf(TEXT("Frame %d: Close file\n"), frameCount);
-							f = NULL;
-						}
-					}
-					else {
-
-					}
-					frameCount++;
-				}
-			}
-			LeaveCriticalSection(&yuvSaveCS);
-	      	/*if(latestBufferLength == numBytes){
+			latestBufferLength = pSample->GetActualDataLength();
+			if (latestBufferLength == numBytes) {
 				EnterCriticalSection(&critSection);
-					
-	      			memcpy(pixels, ptrBuffer, latestBufferLength);
-					newFrame	= true;
-					freezeCheck = 1;
+				memcpy(pixels, ptrBuffer, latestBufferLength);
+				newFrame = true;
+				freezeCheck = 1;
 				LeaveCriticalSection(&critSection);
 				SetEvent(hEvent);
-			}else{
-				printf("ERROR: %d: SampleCB() - buffer sizes do not match\n", frameCount);
-			}*/
+			}
+			else {
+				printf("ERROR: SampleCB() - buffer sizes do not match\n");
+			}
+		}
 
 		return S_OK;
     }
@@ -1082,7 +1040,7 @@ bool videoInput::getPixels(int id, unsigned char * dstBuffer, bool flipRedAndBlu
 				int height 			= VDList[id]->height;
 				int width  			= VDList[id]->width;
 
-				processPixels(src, dst, width, height, flipRedAndBlue, flipImage);
+				VIUtils::NV12ToRGB24(dstBuffer, width * height * 3, src, width * height * 3 / 2, width, height, true);
 				VDList[id]->sgCallback->newFrame = false;
 
 			LeaveCriticalSection(&VDList[id]->sgCallback->critSection);
@@ -1104,10 +1062,11 @@ bool videoInput::getPixels(int id, unsigned char * dstBuffer, bool flipRedAndBlu
 					unsigned char * dst = dstBuffer;
 					int width 			= VDList[id]->width;
 					int height 			= VDList[id]->height;
-
+					auto start = high_resolution_clock::now();
 					VIUtils::NV12ToRGB24(dstBuffer, width * height * 3, src, width * height * 3 / 2, width, height, true);
-					//processPixels(rgb24, dst, width, height, flipRedAndBlue, flipImage);
-					//processPixels(rgb24, dst, width, height, true, true);
+					auto stop = high_resolution_clock::now();
+					auto duration = duration_cast<microseconds>(stop - start);
+					_tprintf(TEXT("NV12ToRGB24 %f\n"), duration.count() / 1000.0f);
 					success = true;
 				}else{
 					if(verbose)printf("ERROR: GetPixels() - bufferSizes do not match! actual %d expected %d\n", bufferSize, numBytes);
