@@ -677,7 +677,6 @@ public:
 		if (nv12Size != width * height * 3 / 2) {
 			return E_FAIL;
 		}
-
 		for (int j = 0; j < height / 2; j++) { // Row
 			for (int i = 0; i < width / 2; i++) { // Column
 				DOUBLE U = nv12[width * height + j * width + i * 2];

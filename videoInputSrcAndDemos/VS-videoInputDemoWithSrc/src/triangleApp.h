@@ -20,16 +20,11 @@ class triangleApp : public simpleApp{
 		virtual void mouseDown( float x, float y, int button );
 		virtual void mouseUp  ( float x, float y, int button );
 		
-
 		imageTexture * IT;
-		imageTexture * IT2;
 		videoInput     VI;
 
-		unsigned char * frame;
-		unsigned char * frame2;
-
-
-		
+		UCHAR* NV12Frame;
+		unsigned char * RGB24Frame;
 };
 
 #endif	// _triangle_APP

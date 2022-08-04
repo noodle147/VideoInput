@@ -1039,8 +1039,7 @@ bool videoInput::getPixels(int id, unsigned char * dstBuffer, bool flipRedAndBlu
 				unsigned char * dst = dstBuffer;
 				int height 			= VDList[id]->height;
 				int width  			= VDList[id]->width;
-
-				VIUtils::NV12ToRGB24(dstBuffer, width * height * 3, src, width * height * 3 / 2, width, height, true);
+				memcpy(dst, src, VDList[id]->videoSize);
 				VDList[id]->sgCallback->newFrame = false;
 
 			LeaveCriticalSection(&VDList[id]->sgCallback->critSection);
@@ -1057,16 +1056,11 @@ bool videoInput::getPixels(int id, unsigned char * dstBuffer, bool flipRedAndBlu
 			if(hr==S_OK){
 				int numBytes = VDList[id]->videoSize;
 				if (numBytes == bufferSize){
-
 					unsigned char * src = (unsigned char *)VDList[id]->pBuffer;
 					unsigned char * dst = dstBuffer;
 					int width 			= VDList[id]->width;
 					int height 			= VDList[id]->height;
-					auto start = high_resolution_clock::now();
-					VIUtils::NV12ToRGB24(dstBuffer, width * height * 3, src, width * height * 3 / 2, width, height, true);
-					auto stop = high_resolution_clock::now();
-					auto duration = duration_cast<microseconds>(stop - start);
-					_tprintf(TEXT("NV12ToRGB24 %f\n"), duration.count() / 1000.0f);
+					memcpy(dst, src, numBytes);
 					success = true;
 				}else{
 					if(verbose)printf("ERROR: GetPixels() - bufferSizes do not match! actual %d expected %d\n", bufferSize, numBytes);

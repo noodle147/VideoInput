@@ -1,4 +1,6 @@
 #include "triangleApp.h"
+#include "chrono"
+using namespace std::chrono;
 
 //The first device we want to open
 int dev = 0;
@@ -30,14 +32,13 @@ void triangleApp::init(){
 	//we allocate our openGL texture objects
 	//we give them a ma size of 1024 by 1024 pixels
 	IT  = new imageTexture(1920,1080, GL_RGB);    	
-	IT2 = new imageTexture(2048,2048, GL_RGB);  
 
 	//by default we use a callback method
 	//this updates whenever a new frame
 	//arrives if you are only ocassionally grabbing frames
 	//you might want to set this to false as the callback caches the last
 	//frame for performance reasons. 
-	VI.setUseCallback(false);
+	VI.setUseCallback(true);
 
 	//try and setup device with id 0 and id 1
 	//if only one device is found the second 
@@ -51,7 +52,6 @@ void triangleApp::init(){
 	//if those sizes are not possible VI will look for the next nearest matching size
 	//VI.setRequestedMediaSubType((int)MEDIASUBTYPE_MJPG);
 	VI.setupDevice(dev,   1920, 1080, VI_COMPOSITE); 
-	//VI.setupDevice(dev+1, 1920, 1080, VI_COMPOSITE);	
 	
 	//once the device is setup you can try and
 	//set the format - this is useful if your device
@@ -60,8 +60,8 @@ void triangleApp::init(){
 
 	//we allocate our buffer based on the number
 	//of pixels in each frame - this will be width * height * 3
-	frame = new unsigned char[VI.getWidth(dev) * VI.getHeight(dev) * 3];
-	//frame2 = new unsigned char[VI.getSize(dev+1)];
+	RGB24Frame = new unsigned char[VI.getWidth(dev) * VI.getHeight(dev) * 3];
+	NV12Frame = new UCHAR[VI.getWidth(dev) * VI.getHeight(dev) * 3 / 2];
  
 }
 
@@ -71,10 +71,17 @@ void triangleApp::idle(){
 	if( VI.isFrameNew(dev) )	
 	{
 		//we get the pixels by passing in out buffer which gets filled
-		VI.getPixels(dev,frame, true);
+		VI.getPixels(dev,NV12Frame, true);
+		auto start = high_resolution_clock::now();
+		int width = VI.getWidth(dev);
+		int height = VI.getHeight(dev);
+		VIUtils::NV12ToRGB24(RGB24Frame, width * height * 3, NV12Frame, width * height * 3 / 2, width, height, true);
+		auto stop = high_resolution_clock::now();
+		auto duration = duration_cast<microseconds>(stop - start);
+		_tprintf(TEXT("NV12ToRGB24 %f\n"), duration.count() / 1000.0f);
 
 		//we then load them into our texture
-		IT->loadImageData(frame, VI.getWidth(dev), VI.getHeight(dev),GL_RGB);
+		IT->loadImageData(RGB24Frame, VI.getWidth(dev), VI.getHeight(dev),GL_RGB);
 	}
 	
 	//check to see if we have got a new frame
