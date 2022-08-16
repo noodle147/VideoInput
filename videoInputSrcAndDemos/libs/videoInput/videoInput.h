@@ -700,6 +700,48 @@ public:
 		return S_OK;
 	}
 
+	static HRESULT NV12ToRGBA32(UCHAR* rgba, ULONG rgbaSize, UCHAR* nv12, ULONG nv12Size, int width, int height, bool verticalFlip = false, bool bgra = false) {
+		if (width <= 0 || height <= 0 || rgba == NULL || nv12 == NULL || width % 2 != 0 || height % 2 != 0) {
+			return E_FAIL;
+		}
+		if (rgbaSize != width * height * 4) {
+			return E_FAIL;
+		}
+		if (nv12Size != width * height * 3 / 2) {
+			return E_FAIL;
+		}
+		for (int j = 0; j < height / 2; j++) { // Row
+			for (int i = 0; i < width / 2; i++) { // Column
+				DOUBLE U = nv12[width * height + j * width + i * 2];
+				DOUBLE V = nv12[width * height + j * width + i * 2 + 1];
+				for (int k = 0; k < 2; k++) {
+					for (int l = 0; l < 2; l++) {
+						int yPos = (2 * j + l) * width + 2 * i + k;
+						DOUBLE Y = nv12[yPos];
+						DOUBLE R, G, B;
+						RGBfromYUV(R, G, B, Y, U, V);
+						if (verticalFlip) {
+							yPos = (height - 1 - 2 * j - l) * width + 2 * i + k;
+						}
+						if (bgra) {
+							rgba[yPos * 4] = (UCHAR)B;
+							rgba[yPos * 4 + 1] = (UCHAR)G;
+							rgba[yPos * 4 + 2] = (UCHAR)R;
+							rgba[yPos * 4 + 3] = (UCHAR)255;
+						}
+						else {
+							rgba[yPos * 4] = (UCHAR)R;
+							rgba[yPos * 4 + 1] = (UCHAR)G;
+							rgba[yPos * 4 + 2] = (UCHAR)B;
+							rgba[yPos * 4 + 3] = (UCHAR)255;
+						}
+					}
+				}
+			}
+		}
+		return S_OK;
+	}
+
 	static UCHAR* NV12ToRGB24(UCHAR* data, int width, int height) {
 		int sizeRgb24 = width * height * 3;
 		int sizeNv12 = width * height * 3 / 2;
@@ -708,6 +750,16 @@ public:
 			VIUtils::NV12ToRGB24(rgb24, sizeRgb24, data, sizeNv12, width, height);
 		}
 		return rgb24;
+	}
+
+	static UCHAR* NV12ToRGBA32(UCHAR* data, int width, int height) {
+		int sizeRgba = width * height * 4;
+		int sizeNv12 = width * height * 3 / 2;
+		UCHAR* rgba = new UCHAR[sizeRgba];
+		if (rgba) {
+			VIUtils::NV12ToRGBA32(rgba, sizeRgba, data, sizeNv12, width, height);
+		}
+		return rgba;
 	}
 
 	static HRESULT SaveToFile(LPCTSTR fileName, UCHAR* data, size_t cbSize) {
@@ -897,7 +949,7 @@ public:
 			_tprintf(TEXT("Frame %d: Create rgb24 file %s\n"), frameCount, rgb24Path);
 		}
 
-		if (frameCount < 30) {
+		if (frameCount == 15) {
 			if (f) {
 				UCHAR* tmp = new UCHAR[cbSize];
 				memcpy(tmp, frame, cbSize);

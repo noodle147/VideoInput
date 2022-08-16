@@ -8,7 +8,7 @@ int dev = 0;
 
 //empty constructor
 triangleApp::triangleApp(){
-	
+	PixelFormat = GL_RGBA;
 }
 
 void triangleApp::init(){
@@ -31,7 +31,7 @@ void triangleApp::init(){
 
 	//we allocate our openGL texture objects
 	//we give them a ma size of 1024 by 1024 pixels
-	IT  = new imageTexture(1920,1080, GL_RGB);    	
+	IT  = new imageTexture(1920,1080, PixelFormat);    	
 
 	//by default we use a callback method
 	//this updates whenever a new frame
@@ -60,7 +60,16 @@ void triangleApp::init(){
 
 	//we allocate our buffer based on the number
 	//of pixels in each frame - this will be width * height * 3
-	RGB24Frame = new unsigned char[VI.getWidth(dev) * VI.getHeight(dev) * 3];
+	if (PixelFormat == GL_RGB) {
+		PixelFrame = new unsigned char[VI.getWidth(dev) * VI.getHeight(dev) * 3];
+	}
+	else if (PixelFormat == GL_RGBA) {
+		PixelFrame = new unsigned char[VI.getWidth(dev) * VI.getHeight(dev) * 4];
+	}
+	else {
+		
+	}
+	
 	NV12Frame = new UCHAR[VI.getWidth(dev) * VI.getHeight(dev) * 3 / 2];
  
 }
@@ -75,13 +84,24 @@ void triangleApp::idle(){
 		auto start = high_resolution_clock::now();
 		int width = VI.getWidth(dev);
 		int height = VI.getHeight(dev);
-		VIUtils::NV12ToRGB24(RGB24Frame, width * height * 3, NV12Frame, width * height * 3 / 2, width, height, true);
+		if (PixelFormat == GL_RGB) {
+			VIUtils::NV12ToRGB24(PixelFrame, width * height * 3, NV12Frame, width * height * 3 / 2, width, height, true);
+		}
+		else if (PixelFormat == GL_RGBA) {
+			VIUtils::NV12ToRGBA32(PixelFrame, width * height * 4, NV12Frame, width * height * 3 / 2, width, height, true);
+			//FrameSaver::Save(PixelFrame, width * height * 4);
+		}
+		else {
+
+		}
 		auto stop = high_resolution_clock::now();
 		auto duration = duration_cast<microseconds>(stop - start);
-		_tprintf(TEXT("NV12ToRGB24 %f\n"), duration.count() / 1000.0f);
+		_tprintf(TEXT("NV12ToRGB %f\n"), duration.count() / 1000.0f);
 
 		//we then load them into our texture
-		IT->loadImageData(RGB24Frame, VI.getWidth(dev), VI.getHeight(dev),GL_RGB);
+		if (PixelFormat == GL_RGB || PixelFormat == GL_RGBA) {
+			IT->loadImageData(PixelFrame, VI.getWidth(dev), VI.getHeight(dev),PixelFormat);
+		}
 	}
 	
 	//check to see if we have got a new frame

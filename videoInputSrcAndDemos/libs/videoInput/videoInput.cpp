@@ -188,8 +188,28 @@ public:
 		if (WaitForSingleObject(hEvent, 0) == WAIT_OBJECT_0) return S_OK;
 
 		HRESULT hr = pSample->GetPointer(&ptrBuffer);
-
 		if (hr == S_OK) {
+			_tprintf(TEXT("SampleCB sample time %f"), time);
+			/*REFERENCE_TIME startTime, endTime;
+			hr = pSample->GetTime(&startTime, &endTime);
+			if (hr == S_OK) {
+				_tprintf(TEXT("Stream time Start time %ld, end time %ld\n"), startTime, endTime);
+			}
+			else if (hr == VFW_S_NO_STOP_TIME) {
+				_tprintf(TEXT("Stream time Start time %ld\n"), startTime);
+			}
+			else if (hr == VFW_E_SAMPLE_TIME_NOT_SET) {
+				_tprintf(TEXT("Stream time No sample time\n"));
+			}
+
+			hr = pSample->GetMediaTime(& startTime, & endTime);
+			if (hr == S_OK) {
+				_tprintf(TEXT("Media time Start time %ld, end time %ld\n"), startTime, endTime);
+			}
+			else if (hr == VFW_E_MEDIA_TIME_NOT_SET) {
+				_tprintf(TEXT("Media time No sample time\n"));
+			}*/
+
 			latestBufferLength = pSample->GetActualDataLength();
 			if (latestBufferLength == numBytes) {
 				EnterCriticalSection(&critSection);
@@ -802,13 +822,18 @@ std::vector<std::wstring> videoInput::deviceUniqueNames;
 // ----------------------------------------------------------------------
 
 int videoInput::getDeviceIDFromName(const char * name) {
+	if (name == nullptr) {
+		return -1;
+	}
 
-	if (listDevices(true) == 0) return -1;
+	if (listDevices(true) == 0) {
+		return -1;
+	}
 
 	int deviceID = -1;
 
 	for (int i = 0; i < VI_MAX_CAMERAS; i++) {
-		if (deviceNames[i] == name) {
+		if (strcmp(name, deviceNames[i]) == 0) {
 			deviceID = i;
 			break;
 		}

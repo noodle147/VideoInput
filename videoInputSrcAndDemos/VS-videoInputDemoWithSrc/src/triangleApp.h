@@ -24,7 +24,8 @@ class triangleApp : public simpleApp{
 		videoInput     VI;
 
 		UCHAR* NV12Frame;
-		unsigned char * RGB24Frame;
+		unsigned char * PixelFrame;
+		int PixelFormat;
 };
 
 #endif	// _triangle_APP

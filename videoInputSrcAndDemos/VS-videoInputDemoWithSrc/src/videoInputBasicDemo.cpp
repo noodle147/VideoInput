@@ -46,23 +46,29 @@ void Test() {
     delete[] nv12;
 }
 
-void TestYUVPossible(UCHAR y) {
-    int width, height;
-    UCHAR* nv12 = VIUtils::UVByY(width, height, y);
-    for (int i = 0; i < 64; i++) {
-        _tprintf(TEXT("%x "), nv12[width * height + i]);
-    }
-    _tprintf(TEXT("\n"));
+void TestNV12ToRGB(UCHAR y) {
     TCHAR name[64];
+
+    int width, height;
+    
     _stprintf(name, TEXT("D:\\Projects\\yuv_rgb\\Y_%d_NV12.nv12"), y);
+    UCHAR* nv12 = VIUtils::UVByY(width, height, y);
     VIUtils::SaveToFile(name, nv12, width * height * 3 / 2);
     _tprintf(TEXT("Save to %s\n"), name);
 
     _stprintf(name, TEXT("D:\\Projects\\yuv_rgb\\Y_%d_RGB24.rgb24"), y);
     UCHAR* rgb24 = VIUtils::NV12ToRGB24(nv12, width, height);
     VIUtils::SaveToFile(name, rgb24, width * height * 3);
+    _tprintf(TEXT("Save to %s\n"), name);
+
+    _stprintf(name, TEXT("D:\\Projects\\yuv_rgb\\Y_%d_RGBA32.rgba32"), y);
+    UCHAR* rgba32 = VIUtils::NV12ToRGBA32(nv12, width, height);
+    VIUtils::SaveToFile(name, rgba32, width * height * 4);
+    _tprintf(TEXT("Save to %s\n"), name);
+
     delete[] nv12;
     delete[] rgb24;
+    delete[] rgba32;
 }
 
 void TestSetYUVBlock() {
@@ -82,11 +88,31 @@ void TestSetYUVBlock() {
     delete[] dst;
 }
 
+void TestGetDeviceIdByName() {
+    videoInput::listDevices();
+    std::vector<std::string> deviceNames = videoInput::getDeviceList();
+    if (deviceNames.size() > 0) {
+        for (const auto deviceName : deviceNames) {
+            int deviceId = videoInput::getDeviceIDFromName("OBS Virtual Camera");
+            printf("Device %s -> %d\n", deviceName.c_str(), deviceId);
+            deviceId = videoInput::getDeviceIDFromName(deviceName.c_str());
+            printf("Device %s -> %d\n", deviceName.c_str(), deviceId);
+        }
+    }
+}
+
 int main( void )
 {
     //Test();
-    //TestYUVPossible(16);
     //TestSetYUVBlock();
+    //TestNV12ToRGB(16);
+
+    HANDLE h = GetCurrentThread();
+    BOOL result = SetThreadPriority(h, THREAD_PRIORITY_HIGHEST);
+    if (result == FALSE) {
+        DWORD lastError = GetLastError();
+        printf("SetThreadPriority failed %ld", lastError);
+    }
 
     int     width, height, running, frames, x, y;
     double  t, t0, fps;
